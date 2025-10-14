@@ -197,6 +197,7 @@ export default function FootballPredictionsApp() {
       fetchPartidos(data.access_token);
       fetchPronosticos(data.access_token);
       fetchEstadisticas(data.access_token);
+      fetchPronosticosUsuarios(data.access_token);
       resetAuthForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -1162,7 +1163,7 @@ export default function FootballPredictionsApp() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Biwenger
+                Menú
               </h2>
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -1273,7 +1274,7 @@ export default function FootballPredictionsApp() {
 
                 <div className="relative">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2">
-                    Biwenger
+                    Pronóstico Biwenger
                   </h1>
                   <p className="text-base sm:text-lg lg:text-xl font-semibold mb-4 sm:mb-6 text-purple-100">
                     ¡Haz tus predicciones para esta jornada!
@@ -2132,7 +2133,8 @@ export default function FootballPredictionsApp() {
                                           Resultados Acertados
                                         </h4>
                                         <div className="grid gap-2">
-                                          {usuario.detalleResultados.map((resultado: any, idx: number) => (
+                                          {usuario.detalleResultados.map(
+                                            (resultado: any, idx: number) => (
                                               <div
                                                 key={idx}
                                                 className="bg-white rounded-lg p-3 border-2 border-green-200"
@@ -2210,7 +2212,8 @@ export default function FootballPredictionsApp() {
                                           Goleadores Acertados
                                         </h4>
                                         <div className="grid gap-2">
-                                          {usuario.detalleGoleadores.map((goleador: any, idx: number) => (
+                                          {usuario.detalleGoleadores.map(
+                                            (goleador: any, idx: number) => (
                                               <div
                                                 key={idx}
                                                 className="bg-white rounded-lg p-3 border-2 border-amber-200"
@@ -2386,7 +2389,8 @@ export default function FootballPredictionsApp() {
                             {/* Detalles de resultados */}
                             {detallesExpandidos[usuario.id]?.resultados && (
                               <div className="mt-3 space-y-2">
-                                {usuario.detalleResultados.map((resultado: any, idx: number) => (
+                                {usuario.detalleResultados.map(
+                                  (resultado: any, idx: number) => (
                                     <div
                                       key={idx}
                                       className="bg-green-50 rounded-lg p-3 border-2 border-green-200"
@@ -2494,7 +2498,8 @@ export default function FootballPredictionsApp() {
                             {/* Detalles de goleadores */}
                             {detallesExpandidos[usuario.id]?.goleadores && (
                               <div className="mt-3 space-y-2">
-                                {usuario.detalleGoleadores.map((goleador: any, idx: number) => (
+                                {usuario.detalleGoleadores.map(
+                                  (goleador: any, idx: number) => (
                                     <div
                                       key={idx}
                                       className="bg-amber-50 rounded-lg p-3 border-2 border-amber-200"
