@@ -21,6 +21,40 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
+interface Partido {
+  id: number;
+  equipoLocal: string;
+  equipoVisitante: string;
+  escudoLocal: string;
+  escudoVisitante: string;
+  bandera?: string;
+  fechaHora: string;
+  activo?: number;
+}
+
+interface Pronostico {
+  partidoid: number;
+  goleslocal: number;
+  golesvisita: number;
+  goleadorid?: number | null;
+  nombregoleador?: string | null;
+  fotogoleador?: string | null;
+  escudogoleador?: string | null;
+}
+
+interface Jugador {
+  id: number;
+  nombre: string;
+  foto: string;
+  escudo_equipo: string;
+  nombre_equipo: string;
+}
+
+interface CountdownInfo {
+  texto: string;
+  expirado: boolean;
+}
+
 const inputClassName =
   "w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white text-gray-900 font-medium placeholder:text-gray-500";
 
@@ -34,25 +68,34 @@ export default function FootballPredictionsApp() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [keypass, setkeypass] = useState("");
-  const [partidos, setPartidos] = useState([]);
-  const [pronosticos, setPronosticos] = useState({});
-  const [jugadores, setJugadores] = useState([]);
-  const [tempPronosticos, setTempPronosticos] = useState({});
+  const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [pronosticos, setPronosticos] = useState<Record<number, Pronostico>>(
+    {}
+  );
+  const [jugadores, setJugadores] = useState<Jugador[]>([]);
+  const [tempPronosticos, setTempPronosticos] = useState<Record<number, any>>(
+    {}
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [countdown, setCountdown] = useState({});
+  const [countdown, setCountdown] = useState<Record<number, CountdownInfo>>({});
   const [showGoleadorModal, setShowGoleadorModal] = useState(false);
-  const [jugadoresDisponibles, setJugadoresDisponibles] = useState([]);
-  const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [detallesExpandidos, setDetallesExpandidos] = useState({});
-  const [busquedaGoleador, setBusquedaGoleador] = useState("");
-  const [estadisticasReales, setEstadisticasReales] = useState([]);
-  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
-  const [pronosticosUsuariosReales, setPronosticosUsuariosReales] = useState(
+  const [jugadoresDisponibles, setJugadoresDisponibles] = useState<Jugador[]>(
     []
   );
+  const [partidoSeleccionado, setPartidoSeleccionado] =
+    useState<Partido | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [detallesExpandidos, setDetallesExpandidos] = useState<
+    Record<number, any>
+  >({});
+  const [busquedaGoleador, setBusquedaGoleador] = useState("");
+  const [estadisticasReales, setEstadisticasReales] = useState<any[]>([]);
+  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
+  const [pronosticosUsuariosReales, setPronosticosUsuariosReales] = useState<
+    any[]
+  >([]);
   const [loadingPronosticosUsuarios, setLoadingPronosticosUsuarios] =
     useState(false);
 
@@ -72,12 +115,12 @@ export default function FootballPredictionsApp() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const newCountdown = {};
+      const newCountdown: Record<number, CountdownInfo> = {};
       partidos.forEach((partido) => {
         const fechaPartido = new Date(partido.fechaHora);
         const deadline = new Date(fechaPartido.getTime() - 4 * 60 * 60 * 1000);
         const ahora = new Date();
-        const diferencia = deadline - ahora;
+        const diferencia = deadline.getTime() - ahora.getTime();
 
         if (diferencia > 0) {
           const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
@@ -118,7 +161,7 @@ export default function FootballPredictionsApp() {
     setSuccess("");
   };
 
-  const normalizarTexto = (texto) => {
+  const normalizarTexto = (texto: string) => {
     return texto
       .toLowerCase()
       .normalize("NFD")
@@ -132,7 +175,7 @@ export default function FootballPredictionsApp() {
     return nombreNormalizado.includes(busquedaNormalizada);
   });
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     try {
@@ -156,11 +199,11 @@ export default function FootballPredictionsApp() {
       fetchEstadisticas(data.access_token);
       resetAuthForm();
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     }
   };
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -237,11 +280,11 @@ export default function FootballPredictionsApp() {
         }
       }, 1000);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     }
   };
 
-  const handleRecover = async (e) => {
+  const handleRecover = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -277,11 +320,11 @@ export default function FootballPredictionsApp() {
         resetAuthForm();
       }, 3000); // Cambiado a 3000ms (3 segundos)
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     }
   };
 
-  const fetchPartidos = async (authToken) => {
+  const fetchPartidos = async (authToken: string) => {
     try {
       const res = await fetch(`${API_URL}/partidos`, {
         method: "GET",
@@ -297,7 +340,10 @@ export default function FootballPredictionsApp() {
 
       const data = await res.json();
       const sortedData = Array.isArray(data)
-        ? data.sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora))
+        ? data.sort(
+            (a, b) =>
+              new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime()
+          )
         : [];
 
       setPartidos(sortedData);
@@ -307,7 +353,7 @@ export default function FootballPredictionsApp() {
     }
   };
 
-  const fetchEstadisticas = async (authToken) => {
+  const fetchEstadisticas = async (authToken: string) => {
     setLoadingEstadisticas(true);
     try {
       const res = await fetch(`${API_URL}/partidos/estadisticas`, {
@@ -335,7 +381,7 @@ export default function FootballPredictionsApp() {
     }
   };
 
-  const fetchPronosticosUsuarios = async (authToken) => {
+  const fetchPronosticosUsuarios = async (authToken: string) => {
     setLoadingPronosticosUsuarios(true);
     try {
       const res = await fetch(`${API_URL}/partidos/pronosticos-activos`, {
@@ -353,9 +399,9 @@ export default function FootballPredictionsApp() {
       const data = await res.json();
 
       // Procesar los datos para agruparlos por partido
-      const partidosMap = {};
+      const partidosMap: Record<number, any> = {};
 
-      data.forEach((pronostico) => {
+      data.forEach((pronostico: any) => {
         const partidoId = pronostico.partidoId;
 
         if (!partidosMap[partidoId]) {
@@ -387,7 +433,8 @@ export default function FootballPredictionsApp() {
 
       // Convertir el map a array y ordenar por fecha
       const partidosArray = Object.values(partidosMap).sort(
-        (a, b) => new Date(a.fechaHora) - new Date(b.fechaHora)
+        (a, b) =>
+          new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime()
       );
 
       setPronosticosUsuariosReales(partidosArray);
@@ -407,17 +454,23 @@ export default function FootballPredictionsApp() {
       setSuccess("");
 
       // 1. Preparar los datos a enviar
-      const pronosticosParaGuardar = [];
+      const pronosticosParaGuardar: Array<{
+        partidoId: number;
+        golesLocal: number;
+        golesVisita: number;
+        jugadorId: number | null;
+      }> = [];
 
       // Recorrer tempPronosticos y pronosticos existentes
-      Object.keys(tempPronosticos).forEach((partidoId) => {
+      Object.keys(tempPronosticos).forEach((partidoIdStr) => {
+        const partidoId = parseInt(partidoIdStr);
         const temp = tempPronosticos[partidoId];
         const existente = pronosticos[partidoId];
 
         // Obtener los valores finales
-        const golesLocal = temp.golesLocal ?? existente?.goleslocal;
-        const golesVisita = temp.golesVisita ?? existente?.golesvisita;
-        const jugadorId = temp.goleadorid ?? existente?.goleadorid ?? null;
+        const golesLocal = temp?.golesLocal ?? existente?.goleslocal;
+        const golesVisita = temp?.golesVisita ?? existente?.golesvisita;
+        const jugadorId = temp?.goleadorid ?? existente?.goleadorid ?? null;
 
         // Solo incluir si tiene goles definidos
         if (
@@ -427,17 +480,17 @@ export default function FootballPredictionsApp() {
           golesVisita !== ""
         ) {
           pronosticosParaGuardar.push({
-            partidoId: parseInt(partidoId),
-            golesLocal: parseInt(golesLocal),
-            golesVisita: parseInt(golesVisita),
-            jugadorId: jugadorId ? parseInt(jugadorId) : null, // ⬅️ Enviar null si no hay
+            partidoId: partidoId,
+            golesLocal: parseInt(golesLocal.toString()),
+            golesVisita: parseInt(golesVisita.toString()),
+            jugadorId: jugadorId ? parseInt(jugadorId.toString()) : null,
           });
         }
       });
 
       // Validar que haya al menos un pronóstico
       if (pronosticosParaGuardar.length === 0) {
-        setError("Revisa tus pronósticos");
+        setError("No hay pronósticos para guardar");
         setLoading(false);
         return;
       }
@@ -472,15 +525,15 @@ export default function FootballPredictionsApp() {
         window.location.reload();
       }, 1500);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Error desconocido");
       setLoading(false);
     }
   };
 
-  const procesarEstadisticas = (pronosticos) => {
-    const usuariosMap = {};
+  const procesarEstadisticas = (pronosticos: any[]) => {
+    const usuariosMap: Record<number, any> = {};
 
-    pronosticos.forEach((p) => {
+    pronosticos.forEach((p: any) => {
       if (!usuariosMap[p.usuarioId]) {
         usuariosMap[p.usuarioId] = {
           id: p.usuarioId,
@@ -537,11 +590,11 @@ export default function FootballPredictionsApp() {
     });
 
     return Object.values(usuariosMap).sort(
-      (a, b) => b.totalGanado - a.totalGanado
+      (a: any, b: any) => b.totalGanado - a.totalGanado
     );
   };
 
-  const fetchJugadoresPartido = async (partidoId) => {
+  const fetchJugadoresPartido = async (partidoId: number) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/partidos/${partidoId}/jugadores`, {
@@ -565,7 +618,7 @@ export default function FootballPredictionsApp() {
     }
   };
 
-  const fetchPronosticos = async (authToken) => {
+  const fetchPronosticos = async (authToken: string) => {
     try {
       const res = await fetch(`${API_URL}/partidos/mis-pronosticos`, {
         method: "GET",
@@ -582,16 +635,9 @@ export default function FootballPredictionsApp() {
       const data = await res.json();
 
       // Convertir array a objeto indexado por partidoid
-      const pronosticosMap = {};
-      data.forEach((p) => {
-        pronosticosMap[p.partidoid] = {
-          ...p,
-          // Asegurar que los campos de goleador puedan ser null
-          goleadorid: p.goleadorid || null,
-          nombregoleador: p.nombregoleador || null,
-          fotogoleador: p.fotogoleador || null,
-          escudogoleador: p.escudogoleador || null,
-        };
+      const pronosticosMap: Record<number, Pronostico> = {};
+      data.forEach((p: any) => {
+        pronosticosMap[p.partidoid] = p;
       });
 
       setPronosticos(pronosticosMap);
@@ -601,7 +647,7 @@ export default function FootballPredictionsApp() {
     }
   };
 
-  const abrirModalGoleador = async (partido) => {
+  const abrirModalGoleador = async (partido: Partido) => {
     setPartidoSeleccionado(partido);
     setBusquedaGoleador("");
     const jugadores = await fetchJugadoresPartido(partido.id);
@@ -609,7 +655,9 @@ export default function FootballPredictionsApp() {
     setShowGoleadorModal(true);
   };
 
-  const seleccionarGoleador = async (jugador) => {
+  const seleccionarGoleador = async (jugador: Jugador) => {
+    if (!partidoSeleccionado) return;
+
     // Actualizar el pronóstico con la información del goleador
     setPronosticos((prevPronosticos) => ({
       ...prevPronosticos,
@@ -635,9 +683,6 @@ export default function FootballPredictionsApp() {
     }));
 
     setShowGoleadorModal(false);
-
-    // TODO: Llamar al endpoint para guardar el goleador en el backend
-    // await guardarGoleador(partidoSeleccionado.id, jugador.id);
   };
 
   // Datos de prueba para pronósticos de usuarios
@@ -798,7 +843,7 @@ export default function FootballPredictionsApp() {
     },
   ];
 
-  const toggleDetalles = (usuarioId, tipo) => {
+  const toggleDetalles = (usuarioId: number, tipo: string) => {
     setDetallesExpandidos((prev) => ({
       ...prev,
       [usuarioId]: {
@@ -1339,7 +1384,9 @@ export default function FootballPredictionsApp() {
                                   alt="Bandera"
                                   className="w-6 h-4 object-cover rounded shadow-sm"
                                   onError={(e) =>
-                                    (e.target.style.display = "none")
+                                    ((
+                                      e.target as HTMLImageElement
+                                    ).style.display = "none")
                                   }
                                 />
                               )}
@@ -1552,9 +1599,13 @@ export default function FootballPredictionsApp() {
                                         alt={pronostico.nombregoleador}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                          e.target.style.display = "none";
-                                          e.target.parentElement.innerHTML =
-                                            '<div class="w-full h-full bg-amber-200 flex items-center justify-center text-amber-700 font-bold text-lg">?</div>';
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                          if (target.parentElement) {
+                                            target.parentElement.innerHTML =
+                                              "...";
+                                          }
                                         }}
                                       />
                                     ) : (
@@ -1570,7 +1621,9 @@ export default function FootballPredictionsApp() {
                                         alt="Escudo"
                                         className="w-4 h-4 object-contain"
                                         onError={(e) =>
-                                          (e.target.style.display = "none")
+                                          ((
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none")
                                         }
                                       />
                                     </div>
@@ -1726,7 +1779,7 @@ export default function FootballPredictionsApp() {
                           </div>
                         </div>
 
-                        {partido.pronosticos.map((pronostico) => (
+                        {partido.pronosticos.map((pronostico: any) => (
                           <div
                             key={pronostico.id}
                             className="grid grid-cols-3 gap-4 items-center py-4 border-b border-gray-100 hover:bg-purple-50/50 transition-colors rounded-lg px-2"
@@ -1801,7 +1854,7 @@ export default function FootballPredictionsApp() {
 
                       {/* Pronósticos de usuarios - Mobile */}
                       <div className="lg:hidden p-4 space-y-4">
-                        {partido.pronosticos.map((pronostico) => (
+                        {partido.pronosticos.map((pronostico: any) => (
                           <div
                             key={pronostico.id}
                             className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-100"
@@ -2068,7 +2121,7 @@ export default function FootballPredictionsApp() {
                                 detallesExpandidos[usuario.id]?.goleadores) && (
                                 <tr>
                                   <td
-                                    colSpan="5"
+                                    colSpan={5 as number}
                                     className="px-6 py-4 bg-purple-50/50"
                                   >
                                     {detallesExpandidos[usuario.id]
@@ -2079,8 +2132,7 @@ export default function FootballPredictionsApp() {
                                           Resultados Acertados
                                         </h4>
                                         <div className="grid gap-2">
-                                          {usuario.detalleResultados.map(
-                                            (resultado, idx) => (
+                                          {usuario.detalleResultados.map((resultado: any, idx: number) => (
                                               <div
                                                 key={idx}
                                                 className="bg-white rounded-lg p-3 border-2 border-green-200"
@@ -2097,7 +2149,9 @@ export default function FootballPredictionsApp() {
                                                           alt=""
                                                           className="w-6 h-6 object-contain"
                                                           onError={(e) =>
-                                                            (e.target.style.display =
+                                                            ((
+                                                              e.target as HTMLImageElement
+                                                            ).style.display =
                                                               "none")
                                                           }
                                                         />
@@ -2118,7 +2172,9 @@ export default function FootballPredictionsApp() {
                                                           alt=""
                                                           className="w-6 h-6 object-contain"
                                                           onError={(e) =>
-                                                            (e.target.style.display =
+                                                            ((
+                                                              e.target as HTMLImageElement
+                                                            ).style.display =
                                                               "none")
                                                           }
                                                         />
@@ -2154,8 +2210,7 @@ export default function FootballPredictionsApp() {
                                           Goleadores Acertados
                                         </h4>
                                         <div className="grid gap-2">
-                                          {usuario.detalleGoleadores.map(
-                                            (goleador, idx) => (
+                                          {usuario.detalleGoleadores.map((goleador: any, idx: number) => (
                                               <div
                                                 key={idx}
                                                 className="bg-white rounded-lg p-3 border-2 border-amber-200"
@@ -2170,14 +2225,20 @@ export default function FootballPredictionsApp() {
                                                           alt={goleador.jugador}
                                                           className="w-full h-full object-cover"
                                                           onError={(e) => {
-                                                            e.target.style.display =
+                                                            const target =
+                                                              e.target as HTMLImageElement;
+                                                            target.style.display =
                                                               "none";
-                                                            e.target.parentElement.innerHTML =
-                                                              '<div class="w-full h-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold">' +
-                                                              goleador.jugador.charAt(
-                                                                0
-                                                              ) +
-                                                              "</div>";
+                                                            if (
+                                                              target.parentElement
+                                                            ) {
+                                                              target.parentElement.innerHTML =
+                                                                '<div class="w-full h-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold">' +
+                                                                goleador.jugador.charAt(
+                                                                  0
+                                                                ) +
+                                                                "</div>";
+                                                            }
                                                           }}
                                                         />
                                                       ) : (
@@ -2196,7 +2257,9 @@ export default function FootballPredictionsApp() {
                                                           alt=""
                                                           className="w-3 h-3 object-contain"
                                                           onError={(e) =>
-                                                            (e.target.style.display =
+                                                            ((
+                                                              e.target as HTMLImageElement
+                                                            ).style.display =
                                                               "none")
                                                           }
                                                         />
@@ -2216,7 +2279,9 @@ export default function FootballPredictionsApp() {
                                                           alt=""
                                                           className="w-4 h-4 object-contain"
                                                           onError={(e) =>
-                                                            (e.target.style.display =
+                                                            ((
+                                                              e.target as HTMLImageElement
+                                                            ).style.display =
                                                               "none")
                                                           }
                                                         />
@@ -2232,7 +2297,9 @@ export default function FootballPredictionsApp() {
                                                           alt=""
                                                           className="w-4 h-4 object-contain"
                                                           onError={(e) =>
-                                                            (e.target.style.display =
+                                                            ((
+                                                              e.target as HTMLImageElement
+                                                            ).style.display =
                                                               "none")
                                                           }
                                                         />
@@ -2319,8 +2386,7 @@ export default function FootballPredictionsApp() {
                             {/* Detalles de resultados */}
                             {detallesExpandidos[usuario.id]?.resultados && (
                               <div className="mt-3 space-y-2">
-                                {usuario.detalleResultados.map(
-                                  (resultado, idx) => (
+                                {usuario.detalleResultados.map((resultado: any, idx: number) => (
                                     <div
                                       key={idx}
                                       className="bg-green-50 rounded-lg p-3 border-2 border-green-200"
@@ -2334,8 +2400,9 @@ export default function FootballPredictionsApp() {
                                                 alt=""
                                                 className="w-5 h-5 object-contain"
                                                 onError={(e) =>
-                                                  (e.target.style.display =
-                                                    "none")
+                                                  ((
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = "none")
                                                 }
                                               />
                                             )}
@@ -2350,8 +2417,9 @@ export default function FootballPredictionsApp() {
                                                 alt=""
                                                 className="w-5 h-5 object-contain"
                                                 onError={(e) =>
-                                                  (e.target.style.display =
-                                                    "none")
+                                                  ((
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = "none")
                                                 }
                                               />
                                             )}
@@ -2426,8 +2494,7 @@ export default function FootballPredictionsApp() {
                             {/* Detalles de goleadores */}
                             {detallesExpandidos[usuario.id]?.goleadores && (
                               <div className="mt-3 space-y-2">
-                                {usuario.detalleGoleadores.map(
-                                  (goleador, idx) => (
+                                {usuario.detalleGoleadores.map((goleador: any, idx: number) => (
                                     <div
                                       key={idx}
                                       className="bg-amber-50 rounded-lg p-3 border-2 border-amber-200"
@@ -2441,12 +2508,17 @@ export default function FootballPredictionsApp() {
                                                 alt={goleador.jugador}
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
-                                                  e.target.style.display =
-                                                    "none";
-                                                  e.target.parentElement.innerHTML =
-                                                    '<div class="w-full h-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold">' +
-                                                    goleador.jugador.charAt(0) +
-                                                    "</div>";
+                                                  const target =
+                                                    e.target as HTMLImageElement;
+                                                  target.style.display = "none";
+                                                  if (target.parentElement) {
+                                                    target.parentElement.innerHTML =
+                                                      '<div class="w-full h-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold">' +
+                                                      goleador.jugador.charAt(
+                                                        0
+                                                      ) +
+                                                      "</div>";
+                                                  }
                                                 }}
                                               />
                                             ) : (
@@ -2462,8 +2534,9 @@ export default function FootballPredictionsApp() {
                                                 alt=""
                                                 className="w-3 h-3 object-contain"
                                                 onError={(e) =>
-                                                  (e.target.style.display =
-                                                    "none")
+                                                  ((
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = "none")
                                                 }
                                               />
                                             </div>
@@ -2480,8 +2553,9 @@ export default function FootballPredictionsApp() {
                                                 alt=""
                                                 className="w-4 h-4 object-contain"
                                                 onError={(e) =>
-                                                  (e.target.style.display =
-                                                    "none")
+                                                  ((
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = "none")
                                                 }
                                               />
                                             )}
@@ -2494,8 +2568,9 @@ export default function FootballPredictionsApp() {
                                                 alt=""
                                                 className="w-4 h-4 object-contain"
                                                 onError={(e) =>
-                                                  (e.target.style.display =
-                                                    "none")
+                                                  ((
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = "none")
                                                 }
                                               />
                                             )}
@@ -2629,9 +2704,12 @@ export default function FootballPredictionsApp() {
                               alt={jugador.nombre}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.target.style.display = "none";
-                                e.target.parentElement.innerHTML =
-                                  '<div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">?</div>';
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                if (target.parentElement) {
+                                  target.parentElement.innerHTML =
+                                    '<div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">?</div>';
+                                }
                               }}
                             />
                           ) : (
@@ -2646,7 +2724,10 @@ export default function FootballPredictionsApp() {
                               src={jugador.escudo_equipo}
                               alt={jugador.nombre_equipo}
                               className="w-5 h-5 object-contain"
-                              onError={(e) => (e.target.style.display = "none")}
+                              onError={(e) =>
+                                ((e.target as HTMLImageElement).style.display =
+                                  "none")
+                              }
                             />
                           </div>
                         )}
