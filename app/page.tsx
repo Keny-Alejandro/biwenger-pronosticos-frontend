@@ -1277,7 +1277,7 @@ export default function FootballPredictionsApp() {
                     Pronóstico Biwenger
                   </h1>
                   <p className="text-base sm:text-lg lg:text-xl font-semibold mb-4 sm:mb-6 text-purple-100">
-                    ¡Haz tus predicciones para esta jornada!
+                    ¡Haz tus predicciones para esta jornada! Recuerda que cada pronóstico cierra 4 HORAS ANTES DEL INICIO DE CADA PARTIDO.
                   </p>
 
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border-2 border-white/20">
@@ -2635,6 +2635,7 @@ export default function FootballPredictionsApp() {
                     setBusquedaGoleador("");
                   }}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
+                  
                 >
                   <X className="w-6 h-6" />
                 </button>
